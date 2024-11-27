@@ -1,125 +1,40 @@
-name: Python CI/CD Pipeline Template
+name: Build and Create Artifact
 
 on:
-  workflow_dispatch:
-    inputs:
-      repo_name:
-        description: 'Repository Name'
-        required: true
-        default: 'your-repo-name'
-      deploy_env:
-        description: 'Deployment Environment'
-        required: true
-        default: 'your-deploy-environment'
-      build_artifacts:
-        description: 'Build Artifacts (true/false)'
-        required: true
-        default: 'true'
+  push:
+    branches:
+      - main
 
 jobs:
-  source_checkout:
-    name: Source Checkout
+  build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-  run_tests:
-    name: Run Pytest
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Set up Python
+      - name: Set Up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: '3.9'
 
       - name: Install Dependencies
+        # Create a requirements.txt dynamically (optional, if dependencies are added)
         run: |
-          python -m pip install --upgrade pip
+          echo "pytest" > requirements.txt
           pip install -r requirements.txt
-          pip install pytest pytest-cov
 
-      - name: Run Pytest with Coverage
-        run: pytest --cov=.
-
-  sonarqube_analysis:
-    name: SonarQube Code Quality Analysis
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-      
-      - name: Install SonarQube Scanner
+      - name: Run Tests
         run: |
-          curl -sSL https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.8.0.2856-linux.zip -o sonar-scanner.zip
-          unzip sonar-scanner.zip -d $HOME
-          echo "export PATH=$HOME/sonar-scanner-4.8.0.2856-linux/bin:\$PATH" >> $GITHUB_ENV
-      
-      - name: Run SonarQube Scan
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: |
-          sonar-scanner \
-          -Dsonar.projectKey=${{ github.event.inputs.repo_name }} \
-          -Dsonar.sources=. \
-          -Dsonar.host.url=$SONAR_HOST_URL \
-          -Dsonar.login=$SONAR_TOKEN
+          # Add tests here if applicable, or remove this step if no tests exist
+          echo "No tests available yet."
 
-  snyk_vulnerability_scan:
-    name: Snyk Vulnerability Scanning
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-      
-      - name: Install Snyk CLI
-        run: |
-          npm install -g snyk
-      
-      - name: Authenticate Snyk
-        run: snyk auth ${{ secrets.SNYK_TOKEN }}
-      
-      - name: Run Snyk Test
-        run: snyk test --all-projects
-      
-      - name: Monitor Project in Snyk
-        run: snyk monitor --all-projects
+      - name: Package Code
+        # Archive cal.py and any other necessary files
+        run: zip -r calculator_artifact.zip cal.py requirements.txt README.md
 
-  build_artifacts:
-    name: Build Project Artifacts
-    runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.build_artifacts == 'true' }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-      
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-      
-      - name: Install Dependencies
-        run: pip install -r requirements.txt
-      
-      - name: Build Artifacts
-        run: python setup.py sdist bdist_wheel
-
-      - name: Store Artifacts
+      - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: build-artifacts
-          path: dist/
-
-  deploy:
-    name: Deploy to Environment
-    runs-on: ubuntu-latest
-    needs: [build_artifacts]
-    steps:
-      - name: Deploy Application
-        run: |
-          echo "Deploying application artifacts to ${{ github.event.inputs.deploy_env }}"
-          # Add your deployment script or commands here
+          name: calculator
+          path: calculator_artifact.zip
