@@ -1,4 +1,4 @@
-name: Build and Create Artifact
+name: Build and Publish Python Package
 
 on:
   push:
@@ -20,18 +20,15 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          # Create a requirements.txt dynamically (optional, if dependencies are added)
           echo "pytest" > requirements.txt
           pip install -r requirements.txt
 
       - name: Run Tests
         run: |
-          # Add tests here if applicable, or remove this step if no tests exist
           echo "No tests available yet."
 
       - name: Package Code
         run: |
-          # Archive cal.py and any other necessary files
           zip -r calculator_artifact.zip cal.py requirements.txt README.md
 
       - name: Upload Artifact
@@ -48,17 +45,22 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Set up Python
+      - name: Set Up Python
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: '3.9'
 
-      - name: Install Twine
-        run: python -m pip install --upgrade pip twine
+      - name: Install Build Tools
+        run: python -m pip install --upgrade pip setuptools wheel twine
+
+      - name: Build Distribution Files
+        run: python setup.py sdist bdist_wheel
+
+      - name: List Dist Directory
+        run: ls -l dist
 
       - name: Upload to PyPI
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: |
-          python -m twine upload dist/*
+        run: python -m twine upload dist/*
