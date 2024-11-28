@@ -51,7 +51,7 @@ jobs:
           --tool twine \
           --repository AK \
           --domain jill \
-          --domain-owner <account-id>  # Replace with your AWS account ID
+          --domain-owner 897729129103  # Replace with your AWS account ID
 
     # Step 8: Publish Python Package to AWS CodeArtifact
     - name: Publish Package
