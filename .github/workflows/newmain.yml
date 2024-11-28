@@ -20,45 +20,39 @@ jobs:
       with:
         python-version: '3.9'
 
-    # Step 3: Install Dependencies
-    - name: Install Dependencies
+    # Step 3: Install Build Tools
+    - name: Install Build Tools
       run: |
-        echo "pytest" > requirements.txt
-        pip install -r requirements.txt
+        pip install setuptools wheel twine
 
-    # Step 4: Run Tests
-    - name: Run Tests
-      run: |
-        echo "No tests available yet."
-
-    # Step 5: Build the Python Package
+    # Step 4: Build Python Package
     - name: Build Python Package
       run: |
         python setup.py sdist bdist_wheel
 
-    # Step 6: Configure AWS Credentials
-    - name: Configure AWS credentials
+    # Step 5: Configure AWS Credentials
+    - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1  # Replace with your AWS region
 
-    # Step 7: Login to AWS CodeArtifact
+    # Step 6: Login to AWS CodeArtifact
     - name: Login to AWS CodeArtifact
       run: |
         aws codeartifact login \
           --tool twine \
           --repository AK \
           --domain jill \
-          --domain-owner 897729129103  # Replace with your AWS account ID
+          --domain-owner 897729129103  # Replace <account-id> with your AWS account ID
 
-    # Step 8: Publish Python Package to AWS CodeArtifact
+    # Step 7: Publish Package to AWS CodeArtifact
     - name: Publish Package
       run: |
         twine upload --repository codeartifact dist/*
 
-    # Optional: Upload the Artifact to GitHub (For Backup or Debugging)
+    # Optional: Upload the Package Artifact to GitHub for Reference
     - name: Upload Package Artifact to GitHub
       uses: actions/upload-artifact@v4
       with:
