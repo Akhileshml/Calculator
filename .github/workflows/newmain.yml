@@ -43,8 +43,8 @@ jobs:
       run: |
         aws codeartifact login \
           --tool twine \
-          --repository AK \
-          --domain jill \
+          --repository pypi-store \
+          --domain ak \
           --domain-owner 897729129103  # Replace <account-id> with your AWS account ID
 
     # Step 7: Publish Package to AWS CodeArtifact
