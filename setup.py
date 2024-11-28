@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="AkhiCalculatorxsx",  # Ensure this name is unique on PyPI
+    name="digiaaaa",  # Ensure this name is unique on PyPI
     version="0.1.0",
     description="A simple calculator package",
     author="Akhi",
