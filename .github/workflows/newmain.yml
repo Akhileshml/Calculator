@@ -3,83 +3,52 @@ name: Build and Publish Python Package to AWS CodeArtifact
 on:
   push:
     branches:
-      - main  # Trigger the workflow on pushes to the 'main' branch
+      - main
 
 jobs:
   build-and-upload:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout Code
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Step 2: Set Up Python
       - name: Set Up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
-      # Step 3: Install Build Tools
       - name: Install Build Tools
         run: |
           pip install setuptools wheel twine
 
-      # Step 4: Build Python Package
       - name: Build Python Package
         run: |
           python setup.py sdist bdist_wheel
 
-      # Step 5: Configure AWS Credentials
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1  # Replace with your AWS region
+          aws-region: us-east-1
 
-      # Step 6: Login to AWS CodeArtifact
       - name: Login to AWS CodeArtifact
         run: |
           aws codeartifact login \
             --tool twine \
             --repository pypi-store \
             --domain ak \
-            --domain-owner 897729129103  # Replace <account-id> with your AWS account ID
+            --domain-owner 897729129103
 
-      # Step 7: Check if Package Version Exists
-      - name: Check if Package Version Exists
-        id: check_version
+      - name: Check for Existing Package Versions
         run: |
-          VERSION_EXISTS=$(aws codeartifact list-package-versions \
-            --domain ak \
-            --repository pypi-store \
-            --package calculator \
-            --format pypi | grep -o '1.0.0')
-          
-          if [[ "$VERSION_EXISTS" == "1.0.0" ]]; then
-            echo "Version 1.0.0 already exists. Skipping upload."
-            echo "version_exists=true" >> $GITHUB_ENV
-          else
-            echo "Version 1.0.0 not found. Proceeding with upload."
-            echo "version_exists=false" >> $GITHUB_ENV
-          fi
+          aws codeartifact list-packages --domain ak --repository pypi-store --format pypi
 
-      # Step 8: Update Version Number if Required
-      - name: Update Version Number
-        if: env.version_exists == 'true'
-        run: |
-          echo "Updating version number to 1.0.1"
-          sed -i 's/version="1.0.0"/version="1.0.1"/' setup.py
-          python setup.py sdist bdist_wheel
-
-      # Step 9: Publish Package to AWS CodeArtifact (if version is new or updated)
       - name: Publish Package
-        if: env.version_exists == 'false' || env.version_exists == 'true'
         run: |
           twine upload --repository codeartifact --verbose dist/*
 
-      # Optional: Upload the Package Artifact to GitHub for Reference
       - name: Upload Package Artifact to GitHub
         uses: actions/upload-artifact@v4
         with:
