@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='calculator',
-    version='1.0.0',
+    version='1.0.1',  # Incremented version
     packages=find_packages(),
     install_requires=[
         'pytest',
