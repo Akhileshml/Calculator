@@ -10,4 +10,8 @@ setup(
     description='Simple cal package',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
+
+    options={
+        'sdist': {'formats': ['zip']}
+    },
 )
