@@ -10,27 +10,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the code
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Step 2: Set up Python 3.9 environment
       - name: Set Up Python
-        uses: actions
+        uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
-      # Step 3: Install dependencies for building the package
       - name: Install Build Tools
         run: |
           pip install setuptools wheel twine
 
-      # Step 4: Build the Python package
       - name: Build Python Package
         run: |
           python setup.py sdist bdist_wheel
 
-      # Step 5: Configure AWS credentials
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -38,7 +33,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      # Step 6: Log in to AWS CodeArtifact
       - name: Login to AWS CodeArtifact
         run: |
           aws codeartifact login \
@@ -47,32 +41,16 @@ jobs:
             --domain ak \
             --domain-owner 897729129103
 
-      # Step 7: Check for existing package versions
       - name: Check for Existing Package Versions
         run: |
           aws codeartifact list-packages --domain ak --repository pypi-store --format pypi
 
-      # Step 8: Publish the package to AWS CodeArtifact
       - name: Publish Package
         run: |
           twine upload --repository codeartifact --verbose dist/*
 
-      # Step 9: Upload package as ZIP artifact to GitHub
       - name: Upload Package Artifact to GitHub
         uses: actions/upload-artifact@v4
         with:
           name: calculator-package
           path: dist/*
-          if-no-files-found: error
-
-      # Step 10: Create ZIP file for the package artifact
-      - name: Zip Package Artifact
-        run: |
-          zip -r calculator-package.zip dist/
-
-      # Step 11: Upload the ZIP file as a GitHub artifact
-      - name: Upload ZIP Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: calculator-package-zip
-          path: calculator-package.zip
