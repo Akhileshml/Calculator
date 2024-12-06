@@ -28,7 +28,7 @@ jobs:
       # Step 4: Configure Git User
       - name: Configure Git User
         run: |
-          git config user.name "akhilesh"
+          git config user.name "Akhileshml"
           git config user.email "akhileshmony@gmail.com"
 
       # Step 5: Debug Git Tags
