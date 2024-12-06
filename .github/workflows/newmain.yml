@@ -10,31 +10,51 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout Code
       - name: Checkout Code
         uses: actions/checkout@v3
 
+      # Step 2: Set Up Python
       - name: Set Up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
+      # Step 3: Install Dependencies
       - name: Install Dependencies
         run: |
           pip install setuptools wheel twine setuptools-scm
 
+      # Step 4: Configure Git User
+      - name: Configure Git User
+        run: |
+          git config user.name "akhilesh"
+          git config user.email "akhileshmony@gmail.com"
+
+      # Step 5: Bump Version (Patch)
       - name: Bump Version (Patch)
         id: bump_version
         run: |
           CURRENT_VERSION=$(git describe --tags --abbrev=0 || echo "0.0.0")
           NEW_VERSION=$(python -c "v='$CURRENT_VERSION'; parts=v.split('.'); parts[-1]=str(int(parts[-1])+1); print('.'.join(parts))")
           echo "New version: $NEW_VERSION"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
           git tag "$NEW_VERSION"
+
+      # Step 6: Push New Tag
+      - name: Push New Tag
+        env:
+          PAT: ${{ secrets.ACTIONS_PAT }}
+        run: |
+          git remote set-url origin https://x-access-token:${PAT}@github.com/${{ github.repository }}
           git push origin "$NEW_VERSION"
 
+      # Step 7: Build Python Package
       - name: Build Python Package
         run: |
           python setup.py sdist bdist_wheel
 
+      # Step 8: Configure AWS Credentials
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -42,6 +62,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      # Step 9: Login to AWS CodeArtifact
       - name: Login to AWS CodeArtifact
         run: |
           aws codeartifact login \
@@ -50,10 +71,12 @@ jobs:
             --domain ak \
             --domain-owner 897729129103
 
+      # Step 10: Publish Package
       - name: Publish Package
         run: |
           twine upload --repository codeartifact --verbose dist/*
 
+      # Step 11: Upload Package Artifact to GitHub
       - name: Upload Package Artifact to GitHub
         uses: actions/upload-artifact@v4
         with:
