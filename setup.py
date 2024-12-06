@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name='calculator',
     use_scm_version=True,  # Automatically manage version via Git tags
-    setup_requires=['setuptools_scm'],  # Dependency for versioning
+    setup_requires=['setuptools_scm'],  # Dependency for versionin
     packages=find_packages(),
     install_requires=[
         'pytest',
