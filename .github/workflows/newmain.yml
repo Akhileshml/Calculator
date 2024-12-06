@@ -31,15 +31,7 @@ jobs:
           git config user.name "akhilesh"
           git config user.email "akhileshmony@gmail.com"
 
-      # Step 5: Debug Git Tags
-      - name: Debug Git Tags
-        run: |
-          echo "Existing Git Tags:"
-          git tag
-          echo "Latest Tag: $(git describe --tags --abbrev=0 || echo 'No tags found')"
-          echo "Current Branch: $(git branch --show-current)"
-
-      # Step 6: Bump Version (Patch)
+      # Step 5: Bump Version (Patch)
       - name: Bump Version (Patch)
         id: bump_version
         run: |
@@ -64,15 +56,32 @@ jobs:
           # Tag the new version
           git tag "$NEW_VERSION"
 
+      # Step 6: Check if Version Exists in CodeArtifact
+      - name: Check Version in AWS CodeArtifact
+        id: check_version
+        run: |
+          VERSION_EXISTS=$(aws codeartifact list-packages --domain ak --domain-owner 897729129103 --repository pypi-store --package calculator --query "packages[?version=='${{ steps.bump_version.outputs.new_version }}'].version" --output text)
+          echo "Version Exists: $VERSION_EXISTS"
+          if [ "$VERSION_EXISTS" != "None" ]; then
+            echo "Version ${{ steps.bump_version.outputs.new_version }} already exists, bumping version..."
+            # Increment the version if it exists
+            BASE_VERSION=$(echo "${{ steps.bump_version.outputs.new_version }}" | sed 's/^V//')
+            NEW_VERSION=$(python -c "v='$BASE_VERSION'; parts=v.split('.'); parts[-1]=str(int(parts[-1])+1); print('V' + '.'.join(parts))")
+            echo "New Version after bump: $NEW_VERSION"
+            echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
+            echo "::set-output name=new_version::$NEW_VERSION"
+            git tag "$NEW_VERSION"
+          fi
+
       # Step 7: Push New Tag
       - name: Push New Tag
         env:
           PAT: ${{ secrets.ACTIONS_PAT }}
         run: |
           set -e  # Exit on error
-          echo "Pushing New Tag: ${{ steps.bump_version.outputs.new_version }}"
+          echo "Pushing New Tag: ${{ steps.check_version.outputs.new_version }}"
           git remote set-url origin https://x-access-token:${PAT}@github.com/${{ github.repository }}
-          git push origin "${{ steps.bump_version.outputs.new_version }}"
+          git push origin "${{ steps.check_version.outputs.new_version }}"
 
       # Step 8: Build Python Package
       - name: Build Python Package
