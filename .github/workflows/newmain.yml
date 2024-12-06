@@ -30,12 +30,16 @@ jobs:
       - name: Bump Version (Patch)
         id: bump_version
         run: |
-          # Get the current version, fallback to 1.0.0 if no tags exist
-          CURRENT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "1.0.0")
+          # Get the current version, fallback to V1.0.0 if no tags exist
+          CURRENT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "V1.0.0")
           echo "Current Version: $CURRENT_VERSION"
 
+          # Strip the 'V' prefix for version manipulation
+          BASE_VERSION=$(echo "$CURRENT_VERSION" | sed 's/^V//')
+          echo "Base Version (without V): $BASE_VERSION"
+
           # Calculate the new version
-          NEW_VERSION=$(python -c "v='$CURRENT_VERSION'.strip('V'); parts=v.split('.'); parts[-1]=str(int(parts[-1])+1); print('.'.join(parts))")
+          NEW_VERSION=$(python -c "v='$BASE_VERSION'; parts=v.split('.'); parts[-1]=str(int(parts[-1])+1); print('V' + '.'.join(parts))")
           echo "New Version: $NEW_VERSION"
 
           # Validate NEW_VERSION
