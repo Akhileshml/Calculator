@@ -22,12 +22,14 @@ jobs:
       - name: Check for Code Changes
         id: check_changes
         run: |
+          # Fetch full history to ensure HEAD^ works
+          git fetch --prune --unshallow
           # Check for code changes (exclude version.txt and other non-code files)
-          git diff --quiet HEAD^ HEAD -- ':!version.txt'
+          git diff --quiet HEAD~1 HEAD -- ':!version.txt'
           echo "changes_detected=$?" >> $GITHUB_ENV
 
       - name: Increment Version
-        if: env.changes_detected == '0'
+        if: env.changes_detected == '1'
         run: |
           python bump_version.py
           git config user.name "github-actions[bot]"
