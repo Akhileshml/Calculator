@@ -23,13 +23,17 @@ jobs:
         id: changes
         run: |
           git fetch origin main
+          # Check for changes in the repository
           if git diff --exit-code HEAD origin/main -- . > /dev/null; then
             echo "No changes detected. Skipping version bump and deployment."
             echo "should_deploy=false" >> $GITHUB_ENV
           else
             echo "Changes detected. Proceeding with version bump and deployment."
             echo "should_deploy=true" >> $GITHUB_ENV
-          fi
+
+      - name: Debug Environment Variable
+        run: |
+          echo "should_deploy is set to: ${{ env.should_deploy }}"
 
       - name: Increment Version (if needed)
         if: env.should_deploy == 'true'
