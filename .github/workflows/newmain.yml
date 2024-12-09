@@ -19,7 +19,6 @@ jobs:
         with:
           python-version: '3.9'
 
-      # Check for changes in the repository
       - name: Check for Changes
         id: changes
         run: |
@@ -54,14 +53,16 @@ jobs:
       - name: Check if Version Exists in CodeArtifact
         run: |
           PACKAGE_VERSION=$(cat version.txt)
-          aws codeartifact list-package-versions \
+          response=$(aws codeartifact list-package-versions \
             --domain ak \
             --repository pypi-store \
             --package calculator \
             --region us-east-1 \
             --query "versions[?version=='$PACKAGE_VERSION']" \
-            --output text
-          if [ $? -eq 0 ]; then
+            --output text)
+          if [[ "$response" == "None" ]]; then
+            echo "Package version $PACKAGE_VERSION does not exist. Proceeding with upload."
+          else
             echo "Package version $PACKAGE_VERSION already exists in CodeArtifact. Skipping upload."
             exit 0
           fi
