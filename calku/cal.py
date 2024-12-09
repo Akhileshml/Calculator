@@ -14,7 +14,7 @@ def divide(a, b):
         return "Error: Division by zero is not allowed."
 
 def calculator():
-    print("Simple Calculator")
+    print("Simple Calclator in my sample progrom")
     print("Select operation:")
     print("1. Adda")
     print("2. Subtractt")
