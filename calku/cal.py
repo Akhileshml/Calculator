@@ -16,9 +16,9 @@ def divide(a, b):
 def calculator():
     print("Simple Calculator")
     print("Select operation:")
-    print("1. Add")
-    print("2. Subtract")
-    print("3. Multiply")
+    print("1. Adda")
+    print("2. Subtractt")
+    print("3. Multiplyy")
     print("4. Divide")
 
     try:
