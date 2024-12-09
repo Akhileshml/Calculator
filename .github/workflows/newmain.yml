@@ -19,6 +19,9 @@ jobs:
         with:
           python-version: '3.9'
 
+      - name: Pull Latest Changes
+        run: git pull origin main
+
       - name: Increment Version
         run: |
           python bump_version.py
