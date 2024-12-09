@@ -19,21 +19,7 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Check for Changes
-        id: changes
-        run: |
-          git fetch origin main
-          if git diff --exit-code HEAD origin/main -- . > /dev/null; then
-            echo "No changes detected. Skipping version bump and deployment."
-            echo "should_deploy=false" >> $GITHUB_ENV
-          else
-            echo "Changes detected. Proceeding with version bump and deployment."
-            echo "should_deploy=true" >> $GITHUB_ENV
-          fi
-        shell: bash
-
-      - name: Increment Version (if needed)
-        if: env.should_deploy == 'true'
+      - name: Increment Version
         run: |
           python bump_version.py
           git config user.name "github-actions[bot]"
@@ -49,23 +35,6 @@ jobs:
       - name: Build Python Package
         run: |
           python setup.py sdist bdist_wheel
-
-      - name: Check if Version Exists in CodeArtifact
-        run: |
-          PACKAGE_VERSION=$(cat version.txt)
-          response=$(aws codeartifact list-package-versions \
-            --domain ak \
-            --repository pypi-store \
-            --package calculator \
-            --region us-east-1 \
-            --query "versions[?version=='$PACKAGE_VERSION']" \
-            --output text)
-          if [[ "$response" == "None" ]]; then
-            echo "Package version $PACKAGE_VERSION does not exist. Proceeding with upload."
-          else
-            echo "Package version $PACKAGE_VERSION already exists in CodeArtifact. Skipping upload."
-            exit 0
-          fi
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
