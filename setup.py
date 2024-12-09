@@ -1,14 +1,17 @@
 from setuptools import setup, find_packages
 
+# Read the version from version.txt
+with open('version.txt') as f:
+    version = f.read().strip()
+
 setup(
     name='calculator',
-    use_scm_version=True,  # Automatically manage version via Git tags
-    setup_requires=['setuptools_scm'],  # Dependency for versionin
+    version=version,  # Use the dynamically updated version
     packages=find_packages(),
     install_requires=[
         'pytest',
     ],
-    description='Simple cal package',
+    description='Simple calculator package',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     options={
