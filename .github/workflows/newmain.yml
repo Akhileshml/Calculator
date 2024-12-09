@@ -34,7 +34,8 @@ jobs:
         shell: bash
 
       - name: Debug Environment Variable
-        run: echo "should_deploy is set to: ${{ env.should_deploy }}"
+        run: |
+          echo "should_deploy is set to: ${{ env.should_deploy }}"
 
       - name: Increment Version (if needed)
         if: env.should_deploy == 'true'
