@@ -11,14 +11,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout the code
       - name: Checkout Code
         uses: actions/checkout@v3
 
+      # Step 2: Set up Python
       - name: Set Up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
+      # Step 3: Check for changes in the repository
       - name: Check for Changes
         id: changes
         run: |
@@ -30,11 +33,14 @@ jobs:
           else
             echo "Changes detected. Proceeding with version bump and deployment."
             echo "should_deploy=true" >> $GITHUB_ENV
+          fi
+        shell: bash
 
+      # Debug Step: Output the value of `should_deploy`
       - name: Debug Environment Variable
-        run: |
-          echo "should_deploy is set to: ${{ env.should_deploy }}"
+        run: echo "should_deploy is set to: ${{ env.should_deploy }}"
 
+      # Step 4: Increment the version if needed
       - name: Increment Version (if needed)
         if: env.should_deploy == 'true'
         run: |
@@ -44,17 +50,20 @@ jobs:
           git commit -am "Bump version to $(cat version.txt)"
           git push
 
+      # Step 5: Install build tools
       - name: Install Build Tools
         if: env.should_deploy == 'true'
         run: |
           python -m pip install --upgrade pip
           pip install setuptools wheel twine
 
+      # Step 6: Build the Python package
       - name: Build Python Package
         if: env.should_deploy == 'true'
         run: |
           python setup.py sdist bdist_wheel
 
+      # Step 7: Configure AWS Credentials
       - name: Configure AWS Credentials
         if: env.should_deploy == 'true'
         uses: aws-actions/configure-aws-credentials@v2
@@ -63,6 +72,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      # Step 8: Log in to AWS CodeArtifact
       - name: Login to AWS CodeArtifact
         if: env.should_deploy == 'true'
         run: |
@@ -72,11 +82,13 @@ jobs:
             --domain ak \
             --domain-owner 897729129103
 
+      # Step 9: Publish the package
       - name: Publish Package
         if: env.should_deploy == 'true'
         run: |
           twine upload --repository codeartifact --verbose dist/*
 
+      # Step 10: Upload package artifact to GitHub
       - name: Upload Package Artifact to GitHub
         if: env.should_deploy == 'true'
         uses: actions/upload-artifact@v4
