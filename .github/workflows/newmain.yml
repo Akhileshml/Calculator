@@ -6,8 +6,7 @@ on:
       - main
 
 jobs:
-  build_and_publish_package:
-    name: Build and Publish Python Package to AWS CodeArtifact
+  build_and_publish:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,34 +18,44 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Check for Code Changes
-        id: check_changes
+      - name: Check for Changes
+        id: changes
         run: |
-          if git diff --quiet HEAD~1 HEAD; then
-            echo "no_changes=true" >> $GITHUB_ENV
+          git fetch origin main
+          if git diff --exit-code HEAD origin/main -- . > /dev/null; then
+            echo "No changes detected. Reusing the existing version."
+            echo "new_version=$(git describe --tags --abbrev=0 2>/dev/null || echo 'V1.0.0')" >> $GITHUB_ENV
+            echo "should_deploy=false" >> $GITHUB_ENV
           else
-            echo "no_changes=false" >> $GITHUB_ENV
-          fi
+            echo "Changes detected. Proceeding with version bump."
+            echo "should_deploy=true" >> $GITHUB_ENV
 
-      - name: Increment Version (if changes exist)
-        if: env.no_changes == 'false'
+      - name: Increment Version
+        if: env.should_deploy == 'true'
         run: |
-          python bump_version.py
+          CURRENT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "V1.0.0")
+          BASE_VERSION=$(echo "$CURRENT_VERSION" | sed 's/^V//')
+          NEW_VERSION=$(python -c "v='$BASE_VERSION'; parts=v.split('.'); parts[-1]=str(int(parts[-1])+1); print('V' + '.'.join(parts))")
+          echo "New Version: $NEW_VERSION"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git commit -am "Bump version to $(cat version.txt)"
-          git push
+          git tag "$NEW_VERSION"
+          git push origin "$NEW_VERSION"
 
       - name: Install Build Tools
+        if: env.should_deploy == 'true'
         run: |
           python -m pip install --upgrade pip
           pip install setuptools wheel twine
 
       - name: Build Python Package
+        if: env.should_deploy == 'true'
         run: |
           python setup.py sdist bdist_wheel
 
       - name: Configure AWS Credentials
+        if: env.should_deploy == 'true'
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -54,6 +63,7 @@ jobs:
           aws-region: us-east-1
 
       - name: Login to AWS CodeArtifact
+        if: env.should_deploy == 'true'
         run: |
           aws codeartifact login \
             --tool twine \
@@ -62,10 +72,12 @@ jobs:
             --domain-owner 897729129103
 
       - name: Publish Package
+        if: env.should_deploy == 'true'
         run: |
           twine upload --repository codeartifact --verbose dist/*
 
       - name: Upload Package Artifact to GitHub
+        if: env.should_deploy == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: calculator-package
