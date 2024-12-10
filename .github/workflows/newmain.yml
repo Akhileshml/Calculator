@@ -28,7 +28,7 @@ jobs:
             echo "should_deploy=true" >> $GITHUB_ENV
           else
             echo "Changes detected. Proceeding with version bump and deployment."
-            echo "should_deploy=true" >> $GITHUB_ENV
+            echo "should_deploy=false" >> $GITHUB_ENV
           fi
 
       - name: Increment Version (if needed)
