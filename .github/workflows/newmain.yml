@@ -1,4 +1,4 @@
-name: Build and Publish Python Package to AWS CodeArtifact
+name: Build and Publish Python Package
 
 on:
   push:
@@ -6,7 +6,8 @@ on:
       - main
 
 jobs:
-  build-and-upload:
+  build_and_publish_package:
+    name: Build and Publish Python Package to AWS CodeArtifact
     runs-on: ubuntu-latest
 
     steps:
@@ -18,43 +19,23 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install Dependencies
+      - name: Increment Version
         run: |
-          pip install setuptools wheel twine setuptools-scm
-      - name: Configure Git User
+          python bump_version.py
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -am "Bump version to $(cat version.txt)"
+          git push
+
+      - name: Install Build Tools
         run: |
-          git config user.name "akhilesh"
-          git config user.email "akhileshmony@gmail.com"
-      - name: Bump Version (Patch)
-        id: bump_version
-        run: |
-          # Get the current version, fallback to V1.0.0 if no tags exist
-          CURRENT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "V1.0.0")
-          echo "Current Version: $CURRENT_VERSION"
-          # Strip the 'V' prefix for version manipulation
-          BASE_VERSION=$(echo "$CURRENT_VERSION" | sed 's/^V//')
-          echo "Base Version (without V): $BASE_VERSION"
-          # Calculate the new version
-          NEW_VERSION=$(python -c "v='$BASE_VERSION'; parts=v.split('.'); parts[-1]=str(int(parts[-1])+1); print('V' + '.'.join(parts))")
-          echo "New Version: $NEW_VERSION"
-          # Validate NEW_VERSION
-          if [ -z "$NEW_VERSION" ]; then
-            echo "Error: NEW_VERSION is empty."
-            exit 1
-          fi
-          # Set new version as an environment variable
-          echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
-          # Create the new tag
-          git tag "$NEW_VERSION"
-      - name: Push New Tag
-        env:
-          PAT: ${{ secrets.ACTIONS_PAT }}
-        run: |
-          git remote set-url origin https://x-access-token:${PAT}@github.com/${{ github.repository }}
-          git push origin "$NEW_VERSION"
+          python -m pip install --upgrade pip
+          pip install setuptools wheel twine
+
       - name: Build Python Package
         run: |
           python setup.py sdist bdist_wheel
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -69,9 +50,11 @@ jobs:
             --repository pypi-store \
             --domain ak \
             --domain-owner 897729129103
+
       - name: Publish Package
         run: |
           twine upload --repository codeartifact --verbose dist/*
+
       - name: Upload Package Artifact to GitHub
         uses: actions/upload-artifact@v4
         with:
