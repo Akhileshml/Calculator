@@ -5,8 +5,8 @@ on:
     branches:
       - main
 
-permissions:
-  contents: write  # Allows GitHub Actions to push changes to the repository
+# permissions:
+#   contents: write  # Allows GitHub Actions to push changes to the repository
 
 jobs:
   build_and_publish_package:
