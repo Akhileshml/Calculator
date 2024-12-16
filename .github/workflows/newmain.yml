@@ -3,10 +3,10 @@ name: Build and Publish Python Package
 on:
   push:
     branches:
-      - main
+      - python__demo_cal  # Trigger workflow only on this branch
 
 permissions:
-  contents: write  # Allows GitHub Actions to push changes to the repository
+  contents: write
 
 jobs:
   build_and_publish_package:
