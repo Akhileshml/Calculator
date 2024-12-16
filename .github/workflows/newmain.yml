@@ -3,7 +3,7 @@ name: Build and Publish Python Package
 on:
   push:
     branches:
-      - main
+      - python__demo_cal
 
 permissions:
   contents: write  # Allows GitHub Actions to push changes to the repository
@@ -25,8 +25,8 @@ jobs:
       - name: Check for Changes
         id: changes
         run: |
-          git fetch origin main
-          if git diff --exit-code HEAD origin/main -- . > /dev/null; then
+          git fetch origin python__demo_cal
+          if git diff --exit-code HEAD origin/python__demo_cal -- . > /dev/null; then
             echo "No changes detected. Skipping version bump and deployment."
             echo "should_deploy=true" >> $GITHUB_ENV
           else
