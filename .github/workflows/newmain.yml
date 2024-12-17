@@ -27,10 +27,10 @@ jobs:
         run: |
           git fetch origin development
           if git diff --exit-code HEAD origin/development -- . > /dev/null; then
-            echo "No changes detected. Skipping version bump and deployment."
+            echo "Changes detected. Proceeding with version bump and deployment."
             echo "should_deploy=true" >> $GITHUB_ENV
           else
-            echo "Changes detected. Proceeding with version bump and deployment."
+            echo "No changes detected. Skipping version bump and deployment."
             echo "should_deploy=false" >> $GITHUB_ENV
           fi
 
